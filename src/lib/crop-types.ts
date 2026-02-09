@@ -29,3 +29,29 @@ export interface CroppedIcon {
   bgRemoved: boolean
   bgConfidence: number
 }
+
+export interface ExportedIconMeta {
+  filename: string
+  originalIndex: number
+  included: boolean
+  bbox: { x: number; y: number; w: number; h: number }
+  croppedSize: { width: number; height: number }
+  finalSize: { width: number; height: number }
+  paddingApplied: number
+  bgRemoved: boolean
+  bgConfidence: number
+}
+
+export interface ExportManifest {
+  schemaVersion: 1
+  appVersion: string
+  exportedAt: string
+  sourceFile: string
+  totalDetected: number
+  totalExported: number
+  export: {
+    sizePx: number | null
+    mode: 'contain' | 'original'
+  }
+  icons: ExportedIconMeta[]
+}

@@ -11,6 +11,7 @@ import type { BBox } from '@/lib/bbox-utils.ts'
 import type { CroppedIcon } from '@/lib/crop-types.ts'
 import { DEFAULT_SENSITIVITY, DEFAULT_MIN_AREA, DEFAULT_PADDING, DEFAULT_BG_REMOVAL, DEFAULT_ZIP_FILENAME } from '@/lib/constants.ts'
 import { buildZip, downloadBlob } from '@/lib/export-utils.ts'
+import { IconDetailModal } from '@/components/IconDetailModal.tsx'
 
 function App() {
   const { theme, toggleTheme } = useTheme()
@@ -33,6 +34,7 @@ function App() {
   const [excludedSet, setExcludedSet] = useState<Set<number>>(new Set())
   const [isProcessing, setIsProcessing] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [selectedIcon, setSelectedIcon] = useState<CroppedIcon | null>(null)
 
   // Refs for debounced re-processing
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -82,6 +84,7 @@ function App() {
     setExcludedSet(new Set())
     setIsProcessing(false)
     setIsExporting(false)
+    setSelectedIcon(null)
     initialProcessDone.current = false
   }, [imageSrc])
 
@@ -132,18 +135,30 @@ function App() {
     })
   }, [])
 
+  const handleSelectAll = useCallback(() => {
+    setExcludedSet(new Set())
+  }, [])
+
+  const handleIconClick = useCallback((icon: CroppedIcon) => {
+    setSelectedIcon(icon)
+  }, [])
+
+  const handleSelectNone = useCallback(() => {
+    setExcludedSet(new Set(croppedIcons.map((_, i) => i)))
+  }, [croppedIcons])
+
   const handleExport = useCallback(async () => {
     if (croppedIcons.length === 0) return
     setIsExporting(true)
     try {
-      const blob = await buildZip(croppedIcons, excludedSet)
+      const blob = await buildZip(croppedIcons, excludedSet, meta?.name ?? '')
       downloadBlob(blob, DEFAULT_ZIP_FILENAME)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Export failed.')
     } finally {
       setIsExporting(false)
     }
-  }, [croppedIcons, excludedSet])
+  }, [croppedIcons, excludedSet, meta])
 
   // Debounced re-processing when padding or bgRemoval changes
   useEffect(() => {
@@ -192,6 +207,8 @@ function App() {
           bgRemoval={bgRemoval}
           onBgRemovalChange={setBgRemoval}
           selectedCount={selectedCount}
+          onSelectAll={handleSelectAll}
+          onSelectNone={handleSelectNone}
           onExport={handleExport}
           isExporting={isExporting}
         />
@@ -205,9 +222,16 @@ function App() {
           croppedIcons={croppedIcons}
           excludedSet={excludedSet}
           onToggleExclude={handleToggleExclude}
+          onIconClick={handleIconClick}
           isProcessing={isProcessing}
         />
       </div>
+      <IconDetailModal
+        icon={selectedIcon}
+        totalDetected={croppedIcons.length}
+        open={selectedIcon !== null}
+        onOpenChange={(open) => { if (!open) setSelectedIcon(null) }}
+      />
     </div>
   )
 }

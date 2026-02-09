@@ -5,9 +5,10 @@ interface IconGridProps {
   icons: CroppedIcon[]
   excludedSet: Set<number>
   onToggleExclude: (index: number) => void
+  onIconClick: (icon: CroppedIcon) => void
 }
 
-export function IconGrid({ icons, excludedSet, onToggleExclude }: IconGridProps) {
+export function IconGrid({ icons, excludedSet, onToggleExclude, onIconClick }: IconGridProps) {
   if (icons.length === 0) return null
 
   return (
@@ -21,10 +22,11 @@ export function IconGrid({ icons, excludedSet, onToggleExclude }: IconGridProps)
         return (
           <div
             key={icon.index}
-            className={`relative rounded-lg border p-2 flex flex-col items-center gap-1 transition-opacity ${
+            className={`relative rounded-lg border p-2 flex flex-col items-center gap-1 transition-opacity cursor-pointer hover:border-primary ${
               excluded ? 'opacity-40' : ''
             }`}
             data-testid="icon-tile"
+            onClick={() => onIconClick(icon)}
           >
             {/* Checkerboard background to show transparency */}
             <div
@@ -56,7 +58,7 @@ export function IconGrid({ icons, excludedSet, onToggleExclude }: IconGridProps)
             {!icon.bgRemoved && icon.bgConfidence > 0 && (
               <div
                 className="absolute top-1 left-1"
-                title="Background removal skipped (low confidence)"
+                title={`Background removal skipped (confidence: ${Math.round(icon.bgConfidence * 100)}%)`}
                 data-testid="bg-warning-badge"
               >
                 <AlertTriangle className="h-3.5 w-3.5 text-yellow-500" />
@@ -64,7 +66,7 @@ export function IconGrid({ icons, excludedSet, onToggleExclude }: IconGridProps)
             )}
 
             <button
-              onClick={() => onToggleExclude(icon.index)}
+              onClick={(e) => { e.stopPropagation(); onToggleExclude(icon.index) }}
               className={`absolute top-1 right-1 rounded-full p-0.5 transition-colors ${
                 excluded
                   ? 'bg-muted text-muted-foreground hover:bg-accent'

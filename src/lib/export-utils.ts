@@ -1,5 +1,6 @@
 import JSZip from 'jszip'
-import type { CroppedIcon } from './crop-types.ts'
+import type { CroppedIcon, ExportManifest, ExportedIconMeta } from './crop-types.ts'
+// resizeDataUrl is only used by IconDetailModal for single-icon download
 
 export function dataUrlToBlob(dataUrl: string): Blob {
   const [header, base64] = dataUrl.split(',')
@@ -12,24 +13,68 @@ export function dataUrlToBlob(dataUrl: string): Blob {
   return new Blob([bytes], { type: mime })
 }
 
-export function generateFilename(index: number, total: number): string {
-  const padWidth = String(total).length
-  const padded = String(index + 1).padStart(padWidth, '0')
+export function generateFilename(originalIndex: number, totalDetected: number): string {
+  const padWidth = String(totalDetected).length
+  const padded = String(originalIndex + 1).padStart(padWidth, '0')
   return `icon-${padded}.png`
+}
+
+export function buildManifest(
+  icons: CroppedIcon[],
+  excludedSet: Set<number>,
+  sourceName: string,
+): ExportManifest {
+  const totalDetected = icons.length
+  const totalExported = icons.filter((_, i) => !excludedSet.has(i)).length
+
+  const iconsMeta: ExportedIconMeta[] = icons.map((icon, i) => {
+    const included = !excludedSet.has(i)
+    return {
+      filename: generateFilename(icon.index, totalDetected),
+      originalIndex: icon.index,
+      included,
+      bbox: { x: icon.bbox.x, y: icon.bbox.y, w: icon.bbox.w, h: icon.bbox.h },
+      croppedSize: { width: icon.width, height: icon.height },
+      finalSize: { width: icon.width, height: icon.height },
+      paddingApplied: icon.paddingApplied,
+      bgRemoved: icon.bgRemoved,
+      bgConfidence: icon.bgConfidence,
+    }
+  })
+
+  return {
+    schemaVersion: 1,
+    appVersion: '1.1.0',
+    exportedAt: new Date().toISOString(),
+    sourceFile: sourceName,
+    totalDetected,
+    totalExported,
+    export: {
+      sizePx: null,
+      mode: 'original',
+    },
+    icons: iconsMeta,
+  }
 }
 
 export async function buildZip(
   icons: CroppedIcon[],
   excludedSet: Set<number>,
+  sourceName: string = '',
 ): Promise<Blob> {
   const zip = new JSZip()
-  const included = icons.filter((_, i) => !excludedSet.has(i))
+  const totalDetected = icons.length
 
-  for (let i = 0; i < included.length; i++) {
-    const blob = dataUrlToBlob(included[i].dataUrl)
-    const filename = generateFilename(i, included.length)
+  for (let i = 0; i < icons.length; i++) {
+    if (excludedSet.has(i)) continue
+    const icon = icons[i]
+    const blob = dataUrlToBlob(icon.dataUrl)
+    const filename = generateFilename(icon.index, totalDetected)
     zip.file(filename, blob)
   }
+
+  const manifest = buildManifest(icons, excludedSet, sourceName)
+  zip.file('manifest.json', JSON.stringify(manifest, null, 2))
 
   return zip.generateAsync({ type: 'blob' })
 }

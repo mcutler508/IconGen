@@ -24,6 +24,8 @@ interface SidebarProps {
   bgRemoval: boolean
   onBgRemovalChange: (value: boolean) => void
   selectedCount: number
+  onSelectAll: () => void
+  onSelectNone: () => void
   onExport: () => void
   isExporting: boolean
 }
@@ -45,12 +47,29 @@ export function Sidebar({
   bgRemoval,
   onBgRemovalChange,
   selectedCount,
+  onSelectAll,
+  onSelectNone,
   onExport,
   isExporting,
 }: SidebarProps) {
   return (
     <aside className="w-72 shrink-0 border-r p-4 flex flex-col gap-4 overflow-y-auto">
       <UploadZone onFileSelected={onFileSelected} disabled={hasImage} />
+
+      <div
+        className="rounded-md border bg-muted/50 px-3 py-2.5 text-xs"
+        data-testid="instruction-box"
+      >
+        <p className="font-medium mb-1">Tips for best results</p>
+        <p className="text-muted-foreground mb-1.5">These tips improve detection + transparency quality.</p>
+        <ul className="list-disc pl-4 space-y-0.5 text-muted-foreground">
+          <li>Use images with a solid white or light background</li>
+          <li>Avoid images with text overlapping icons</li>
+          <li>High-resolution source images work well</li>
+          <li>If too many icons detected, increase Min Area</li>
+          <li>If icons are missed, decrease Sensitivity</li>
+        </ul>
+      </div>
 
       {meta && (
         <>
@@ -153,6 +172,23 @@ export function Sidebar({
                 />
               </div>
 
+              <div className="flex gap-2">
+                <button
+                  className="flex-1 rounded-md border px-2 py-1 text-xs font-medium hover:bg-accent"
+                  onClick={onSelectAll}
+                  data-testid="select-all-button"
+                >
+                  Select All
+                </button>
+                <button
+                  className="flex-1 rounded-md border px-2 py-1 text-xs font-medium hover:bg-accent"
+                  onClick={onSelectNone}
+                  data-testid="select-none-button"
+                >
+                  Select None
+                </button>
+              </div>
+
               <p className="text-xs text-muted-foreground text-center" data-testid="selected-count">
                 {selectedCount} icon{selectedCount !== 1 ? 's' : ''} selected for export
               </p>
@@ -171,7 +207,7 @@ export function Sidebar({
                 ) : (
                   <>
                     <Download className="h-4 w-4" />
-                    Export ZIP
+                    Export ZIP ({selectedCount})
                   </>
                 )}
               </Button>

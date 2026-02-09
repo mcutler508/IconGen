@@ -17,6 +17,7 @@ interface MainPanelProps {
   croppedIcons: CroppedIcon[]
   excludedSet: Set<number>
   onToggleExclude: (index: number) => void
+  onIconClick: (icon: CroppedIcon) => void
   isProcessing: boolean
 }
 
@@ -30,12 +31,13 @@ export function MainPanel({
   croppedIcons,
   excludedSet,
   onToggleExclude,
+  onIconClick,
   isProcessing,
 }: MainPanelProps) {
   const selectedCount = croppedIcons.length - excludedSet.size
 
   return (
-    <main className="flex-1 overflow-y-auto p-6">
+    <main className="flex-1 overflow-y-auto p-6 caret-transparent select-none">
       {error && (
         <div
           className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
@@ -87,7 +89,7 @@ export function MainPanel({
               {meta.warning}
             </div>
           )}
-          <div className="w-full overflow-hidden rounded-lg border flex justify-center">
+          <div className="w-full overflow-hidden rounded-lg border flex justify-center caret-transparent">
             <DetectionOverlay
               src={imageSrc}
               bboxes={bboxes}
@@ -114,6 +116,7 @@ export function MainPanel({
                 icons={croppedIcons}
                 excludedSet={excludedSet}
                 onToggleExclude={onToggleExclude}
+                onIconClick={onIconClick}
               />
             </div>
           )}

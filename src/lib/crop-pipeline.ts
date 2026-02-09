@@ -4,6 +4,7 @@ import {
   computePaddedRegion,
   estimateBgColor,
   computeBgConfidence,
+  computeBorderVariance,
   applyAlphaMask,
   shouldRemoveBg,
 } from './crop-utils.ts'
@@ -51,10 +52,11 @@ export async function processIcons(
 
     if (bgRemoval) {
       const bgColor = estimateBgColor(pixels, region.w, region.h)
+      const variance = computeBorderVariance(pixels, region.w, region.h, bgColor)
       const result = computeBgConfidence(pixels, region.w, region.h, bgColor)
       bgConfidence = result.confidence
 
-      if (shouldRemoveBg(bgConfidence)) {
+      if (shouldRemoveBg(result.borderBgRatio, variance)) {
         applyAlphaMask(pixels, region.w, region.h, bgColor)
         bgRemoved = true
       }

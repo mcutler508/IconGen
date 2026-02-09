@@ -38,12 +38,8 @@ test.describe('Feature 4 — Export ZIP', () => {
   test('export button is disabled when all icons excluded', async ({ page }) => {
     await uploadAndDetect(page)
 
-    // Exclude all icons
-    const excludeButtons = page.getByTestId('exclude-toggle')
-    const count = await excludeButtons.count()
-    for (let i = 0; i < count; i++) {
-      await excludeButtons.nth(i).click()
-    }
+    // Use Select None button to exclude all
+    await page.getByTestId('select-none-button').click()
 
     // Verify selected count is 0
     await expect(page.getByTestId('selected-count')).toHaveText('0 icons selected for export')
@@ -52,7 +48,7 @@ test.describe('Feature 4 — Export ZIP', () => {
     await expect(page.getByTestId('export-button')).toBeDisabled()
   })
 
-  test('export triggers download with correct file count', async ({ page }) => {
+  test('export triggers download with correct file count and manifest', async ({ page }) => {
     await uploadAndDetect(page)
 
     // Get initial selected count
@@ -75,6 +71,63 @@ test.describe('Feature 4 — Export ZIP', () => {
     const zipBuffer = fs.readFileSync(downloadPath!)
     const zip = await JSZip.loadAsync(zipBuffer)
     const files = Object.keys(zip.files)
-    expect(files).toHaveLength(selectedCount)
+    // PNG files + manifest.json
+    const pngFiles = files.filter(f => f.endsWith('.png'))
+    expect(pngFiles).toHaveLength(selectedCount)
+    expect(files).toContain('manifest.json')
+
+    // Parse and validate manifest
+    const manifestStr = await zip.files['manifest.json'].async('string')
+    const manifest = JSON.parse(manifestStr)
+    expect(manifest.schemaVersion).toBe(1)
+    expect(manifest.export.sizePx).toBe(256)
+    expect(manifest.export.mode).toBe('contain')
+    expect(manifest.totalExported).toBe(selectedCount)
+  })
+
+  test('export size dropdown visible after detection with default 256', async ({ page }) => {
+    await uploadAndDetect(page)
+    const select = page.getByTestId('export-size-select')
+    await expect(select).toBeVisible()
+    await expect(select).toHaveValue('256')
+  })
+
+  test('Select All / Select None buttons update count', async ({ page }) => {
+    await uploadAndDetect(page)
+
+    const selectedText = await page.getByTestId('selected-count').textContent()
+    const totalCount = parseInt(selectedText || '0')
+    expect(totalCount).toBeGreaterThan(0)
+
+    // Click Select None
+    await page.getByTestId('select-none-button').click()
+    await expect(page.getByTestId('selected-count')).toHaveText('0 icons selected for export')
+
+    // Click Select All
+    await page.getByTestId('select-all-button').click()
+    await expect(page.getByTestId('selected-count')).toContainText(`${totalCount} icon`)
+  })
+
+  test('export button shows selected count', async ({ page }) => {
+    await uploadAndDetect(page)
+    const btn = page.getByTestId('export-button')
+    const text = await btn.textContent()
+    expect(text).toMatch(/Export ZIP \(\d+\)/)
+  })
+
+  test('custom size input validates bounds', async ({ page }) => {
+    await uploadAndDetect(page)
+
+    const select = page.getByTestId('export-size-select')
+    await select.selectOption('custom')
+
+    const input = page.getByTestId('export-size-input')
+    await expect(input).toBeVisible()
+
+    // Enter value below min
+    await input.fill('10')
+    await input.dispatchEvent('change')
+    // The input should clamp to min=32
+    await expect(input).toHaveValue('32')
   })
 })

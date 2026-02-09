@@ -19,7 +19,7 @@ export function ImagePreview({ src, meta }: ImagePreviewProps) {
           {meta.warning}
         </div>
       )}
-      <div className="w-full overflow-hidden rounded-lg border">
+      <div className="w-full overflow-hidden rounded-lg border caret-transparent">
         <img
           src={src}
           alt={`Preview of ${meta.name}`}

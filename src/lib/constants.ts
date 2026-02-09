@@ -21,3 +21,14 @@ export const MORPH_CLOSE_BASE_KERNEL = 3
 export const MORPH_KERNEL_REFERENCE_DIM = 346 // sqrt(400*300)
 export const MORPH_CLOSE_MAX_KERNEL = 15
 export const MORPH_OPEN_KERNEL = 3
+
+// Background removal v2
+export const BG_EDGE_FEATHER_PX = 1
+export const BG_BORDER_SAMPLE_INSET_PX = 1
+export const BG_MAX_BG_VARIANCE = 50
+
+// Export size presets
+export const EXPORT_SIZE_PRESETS = [64, 128, 256, 512, 1024] as const
+export const EXPORT_SIZE_MIN = 32
+export const EXPORT_SIZE_MAX = 2048
+export const DEFAULT_EXPORT_SIZE = 256

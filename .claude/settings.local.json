@@ -8,7 +8,9 @@
       "Bash(npm run build:*)",
       "Bash(npx playwright install:*)",
       "Bash(npx playwright test:*)",
-      "Bash(node scripts/generate-test-assets.mjs:*)"
+      "Bash(node scripts/generate-test-assets.mjs:*)",
+      "Bash(dir:*)",
+      "Bash(npm run test:*)"
     ]
   }
 }

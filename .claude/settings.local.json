@@ -10,7 +10,8 @@
       "Bash(npx playwright test:*)",
       "Bash(node scripts/generate-test-assets.mjs:*)",
       "Bash(dir:*)",
-      "Bash(npm run test:*)"
+      "Bash(npm run test:*)",
+      "Bash(if not exist \"C:\\\\Users\\\\mcutl\\\\Documents\\\\IconMaker\\\\src\\\\pages\" mkdir \"C:\\\\Users\\\\mcutl\\\\Documents\\\\IconMaker\\\\src\\\\pages\")"
     ]
   }
 }

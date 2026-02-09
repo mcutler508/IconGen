@@ -23,7 +23,7 @@ async function uploadAndDetect(page: import('@playwright/test').Page) {
 
 test.describe('Feature 4 — Export ZIP', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/app')
   })
 
   test('export button is not visible before detection', async ({ page }) => {
@@ -80,16 +80,9 @@ test.describe('Feature 4 — Export ZIP', () => {
     const manifestStr = await zip.files['manifest.json'].async('string')
     const manifest = JSON.parse(manifestStr)
     expect(manifest.schemaVersion).toBe(1)
-    expect(manifest.export.sizePx).toBe(256)
-    expect(manifest.export.mode).toBe('contain')
+    expect(manifest.export.sizePx).toBeNull()
+    expect(manifest.export.mode).toBe('original')
     expect(manifest.totalExported).toBe(selectedCount)
-  })
-
-  test('export size dropdown visible after detection with default 256', async ({ page }) => {
-    await uploadAndDetect(page)
-    const select = page.getByTestId('export-size-select')
-    await expect(select).toBeVisible()
-    await expect(select).toHaveValue('256')
   })
 
   test('Select All / Select None buttons update count', async ({ page }) => {
@@ -115,19 +108,4 @@ test.describe('Feature 4 — Export ZIP', () => {
     expect(text).toMatch(/Export ZIP \(\d+\)/)
   })
 
-  test('custom size input validates bounds', async ({ page }) => {
-    await uploadAndDetect(page)
-
-    const select = page.getByTestId('export-size-select')
-    await select.selectOption('custom')
-
-    const input = page.getByTestId('export-size-input')
-    await expect(input).toBeVisible()
-
-    // Enter value below min
-    await input.fill('10')
-    await input.dispatchEvent('change')
-    // The input should clamp to min=32
-    await expect(input).toHaveValue('32')
-  })
 })

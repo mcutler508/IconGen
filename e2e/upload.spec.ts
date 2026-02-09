@@ -8,7 +8,7 @@ const FIXTURES = path.join(__dirname, 'fixtures')
 
 test.describe('Feature 1 — Upload & Input Validation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/app')
   })
 
   test('shows empty state on initial load', async ({ page }) => {

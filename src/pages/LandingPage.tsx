@@ -17,12 +17,43 @@ import { Button, buttonVariants } from '@/components/ui/button.tsx'
 import heroBg from '@/assets/CookedBg.png'
 import partyGridLogo from '@/assets/PartyGrid.png'
 import demoVideo from '@/assets/HotIconDemoVid.mp4'
-import { cn } from '@/lib/utils.ts' 
+import { cn } from '@/lib/utils.ts'
+import { supabase, supabaseEnabled } from '@/lib/supabaseClient'
+
+const WAITLIST_STORAGE_KEY = 'iconmaker.waitlist'
+
+type LaunchAppProps = {
+  canLaunch: boolean
+  className?: string
+  size?: 'sm' | 'lg'
+}
+
+function LaunchAppButton({ canLaunch, className, size = 'lg' }: LaunchAppProps) {
+  if (canLaunch) {
+    return (
+      <Link to="/app" className={cn(buttonVariants({ size }), className)}>
+        Launch App <ArrowRight className="ml-1 h-4 w-4" />
+      </Link>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      className={cn(buttonVariants({ size }), 'cursor-not-allowed opacity-60', className)}
+      disabled
+      aria-disabled="true"
+      title="Join the waitlist to unlock the app"
+    >
+      Launch App <ArrowRight className="ml-1 h-4 w-4" />
+    </button>
+  )
+}
 
 /* ------------------------------------------------------------------ */
 /*  Nav                                                               */
 /* ------------------------------------------------------------------ */
-function Nav() {
+function Nav({ canLaunch }: { canLaunch: boolean }) {
   return (
     <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-lg">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
@@ -30,9 +61,13 @@ function Nav() {
           <img src={partyGridLogo} alt="Party Grid" className="h-8 w-auto" />
           IconMaker
         </Link>
-        <Link to="/app" className={buttonVariants({ size: 'sm' })}>
-          Launch App <ArrowRight className="ml-1 h-4 w-4" />
-        </Link>
+        {canLaunch ? (
+          <LaunchAppButton canLaunch={canLaunch} size="sm" />
+        ) : (
+          <a href="#waitlist" className={buttonVariants({ size: 'sm', variant: 'outline' })}>
+            Join Waitlist
+          </a>
+        )}
       </div>
     </nav>
   )
@@ -41,7 +76,7 @@ function Nav() {
 /* ------------------------------------------------------------------ */
 /*  Hero                                                              */
 /* ------------------------------------------------------------------ */
-function Hero() {
+function Hero({ canLaunch }: { canLaunch: boolean }) {
   return (
     <section
       className="relative bg-cover bg-center px-6 pb-24 pt-20 text-center"
@@ -58,12 +93,12 @@ function Hero() {
         export.
       </p>
       <div className="mt-10 flex items-center justify-center gap-4">
-        <Link to="/app" className={buttonVariants({ size: 'lg' })}>
-          Launch App <ArrowRight className="ml-1 h-4 w-4" />
-        </Link>
-        <a href="#waitlist" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
-          Join the Waitlist
-        </a>
+        <LaunchAppButton canLaunch={canLaunch} size="lg" />
+        {!canLaunch ? (
+          <a href="#waitlist" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
+            Join the Waitlist
+          </a>
+        ) : null}
       </div>
       </div>
     </section>
@@ -249,11 +284,21 @@ function FAQ() {
 /* ------------------------------------------------------------------ */
 /*  Waitlist Form                                                     */
 /* ------------------------------------------------------------------ */
-function WaitlistForm() {
-  const formspreeId = import.meta.env.VITE_FORMSPREE_ID
-  const [submitted, setSubmitted] = useState(false)
+type WaitlistFormProps = {
+  hasWaitlist: boolean
+  onWaitlistSubmit: () => void
+}
+
+function WaitlistForm({ hasWaitlist, onWaitlistSubmit }: WaitlistFormProps) {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+  const [submitted, setSubmitted] = useState(hasWaitlist)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    setSubmitted(hasWaitlist)
+  }, [hasWaitlist])
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -261,13 +306,24 @@ function WaitlistForm() {
     setLoading(true)
 
     try {
-      const res = await fetch(`https://formspree.io/f/${formspreeId}`, {
-        method: 'POST',
-        body: new FormData(e.currentTarget),
-        headers: { Accept: 'application/json' },
-      })
-      if (res.ok) {
+      if (!supabaseEnabled || !supabase) {
+        setError('Supabase is not configured. Please try again later.')
+        return
+      }
+      const formData = new FormData(e.currentTarget)
+      const payload = {
+        name: String(formData.get('name') || '').trim(),
+        email: String(formData.get('email') || '').trim().toLowerCase(),
+        role: String(formData.get('role') || ''),
+        usecase: String(formData.get('usecase') || '').trim() || null,
+      }
+      const { error } = await supabase.from('PublicWaitlist').insert(payload)
+
+      if (!error) {
         setSubmitted(true)
+        onWaitlistSubmit()
+      } else if (error.code === '23505') {
+        setError('That email is already on the list.')
       } else {
         setError('Something went wrong. Please try again.')
       }
@@ -353,9 +409,10 @@ function WaitlistForm() {
 
             {error && <p className="text-sm text-destructive">{error}</p>}
 
-            {!formspreeId ? (
+            {!supabaseUrl || !supabaseAnonKey ? (
               <p className="text-sm text-muted-foreground">
-                Set <code className="rounded bg-muted px-1 py-0.5 text-xs">VITE_FORMSPREE_ID</code> to enable
+                Set <code className="rounded bg-muted px-1 py-0.5 text-xs">VITE_SUPABASE_URL</code> and{' '}
+                <code className="rounded bg-muted px-1 py-0.5 text-xs">VITE_SUPABASE_ANON_KEY</code> to enable
                 the waitlist form.
               </p>
             ) : null}
@@ -363,7 +420,7 @@ function WaitlistForm() {
             <Button
               type="submit"
               className="w-full"
-              disabled={!formspreeId || loading}
+              disabled={!supabaseUrl || !supabaseAnonKey || loading}
             >
               {loading ? 'Submitting...' : 'Join Waitlist'}
             </Button>
@@ -377,16 +434,20 @@ function WaitlistForm() {
 /* ------------------------------------------------------------------ */
 /*  CTA                                                               */
 /* ------------------------------------------------------------------ */
-function CTA() {
+function CTA({ canLaunch }: { canLaunch: boolean }) {
   return (
     <section className="mx-auto max-w-4xl px-6 py-24 text-center">
       <h2 className="text-3xl font-bold">Ready to extract icons?</h2>
       <p className="mt-3 text-muted-foreground">
-        Upload an image and get individual icons in seconds — no signup required.
+        Upload an image and get individual icons in seconds. Join the waitlist to unlock the app.
       </p>
-      <Link to="/app" className={cn(buttonVariants({ size: 'lg' }), 'mt-8')}>
-        Launch App <ArrowRight className="ml-1 h-4 w-4" />
-      </Link>
+      {canLaunch ? (
+        <LaunchAppButton canLaunch={canLaunch} size="lg" className="mt-8" />
+      ) : (
+        <a href="#waitlist" className={cn(buttonVariants({ size: 'lg' }), 'mt-8')}>
+          Join the Waitlist
+        </a>
+      )}
     </section>
   )
 }
@@ -406,6 +467,8 @@ function Footer() {
 /*  Landing Page (default export)                                     */
 /* ------------------------------------------------------------------ */
 export default function LandingPage() {
+  const [hasWaitlist, setHasWaitlist] = useState(false)
+
   useEffect(() => {
     const root = document.documentElement
     root.classList.remove('dark')
@@ -415,17 +478,26 @@ export default function LandingPage() {
     }
   }, [])
 
+  useEffect(() => {
+    setHasWaitlist(localStorage.getItem(WAITLIST_STORAGE_KEY) === 'true')
+  }, [])
+
+  function handleWaitlistSubmit() {
+    setHasWaitlist(true)
+    localStorage.setItem(WAITLIST_STORAGE_KEY, 'true')
+  }
+
   return (
     <div className="min-h-screen cursor-default select-none bg-background text-foreground">
-      <Nav />
-      <Hero />
+      <Nav canLaunch={hasWaitlist} />
+      <Hero canLaunch={hasWaitlist} />
       <DemoVideo />
       <SocialProof />
       <HowItWorks />
       <Features />
       <FAQ />
-      <WaitlistForm />
-      <CTA />
+      <WaitlistForm hasWaitlist={hasWaitlist} onWaitlistSubmit={handleWaitlistSubmit} />
+      <CTA canLaunch={hasWaitlist} />
       <Footer />
     </div>
   )

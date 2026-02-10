@@ -9,7 +9,7 @@ import { detectIcons } from '@/lib/detection.ts'
 import { processIcons } from '@/lib/crop-pipeline.ts'
 import type { BBox } from '@/lib/bbox-utils.ts'
 import type { CroppedIcon } from '@/lib/crop-types.ts'
-import { DEFAULT_SENSITIVITY, DEFAULT_MIN_AREA, DEFAULT_PADDING, DEFAULT_BG_REMOVAL, DEFAULT_ZIP_FILENAME } from '@/lib/constants.ts'
+import { DEFAULT_SENSITIVITY, DEFAULT_MIN_AREA, DEFAULT_BLUR, DEFAULT_MERGE_GAP, DEFAULT_PADDING, DEFAULT_BG_REMOVAL, DEFAULT_ZIP_FILENAME } from '@/lib/constants.ts'
 import { buildZip, downloadBlob } from '@/lib/export-utils.ts'
 import { IconDetailModal } from '@/components/IconDetailModal.tsx'
 
@@ -22,6 +22,8 @@ function App() {
   // Detection state
   const [sensitivity, setSensitivity] = useState(DEFAULT_SENSITIVITY)
   const [minArea, setMinArea] = useState(DEFAULT_MIN_AREA)
+  const [blur, setBlur] = useState(DEFAULT_BLUR)
+  const [mergeGap, setMergeGap] = useState(DEFAULT_MERGE_GAP)
   const [bboxes, setBboxes] = useState<BBox[]>([])
   const [isDetecting, setIsDetecting] = useState(false)
   const [hasDetection, setHasDetection] = useState(false)
@@ -78,6 +80,8 @@ function App() {
     setUsedFallback(false)
     setSensitivity(DEFAULT_SENSITIVITY)
     setMinArea(DEFAULT_MIN_AREA)
+    setBlur(DEFAULT_BLUR)
+    setMergeGap(DEFAULT_MERGE_GAP)
     setPadding(DEFAULT_PADDING)
     setBgRemoval(DEFAULT_BG_REMOVAL)
     setCroppedIcons([])
@@ -107,7 +111,7 @@ function App() {
     initialProcessDone.current = false
 
     try {
-      const result = await detectIcons(imageSrc, sensitivity, minArea)
+      const result = await detectIcons(imageSrc, sensitivity, minArea, blur, mergeGap)
       setBboxes(result.bboxes)
       setUsedFallback(result.usedFallback)
       setHasDetection(true)
@@ -121,7 +125,7 @@ function App() {
     } finally {
       setIsDetecting(false)
     }
-  }, [imageSrc, sensitivity, minArea, padding, bgRemoval, runProcessing])
+  }, [imageSrc, sensitivity, minArea, blur, mergeGap, padding, bgRemoval, runProcessing])
 
   const handleToggleExclude = useCallback((index: number) => {
     setExcludedSet((prev) => {
@@ -198,6 +202,10 @@ function App() {
           onSensitivityChange={setSensitivity}
           minArea={minArea}
           onMinAreaChange={setMinArea}
+          blur={blur}
+          onBlurChange={setBlur}
+          mergeGap={mergeGap}
+          onMergeGapChange={setMergeGap}
           onDetect={handleDetect}
           isDetecting={isDetecting}
           hasDetection={hasDetection}

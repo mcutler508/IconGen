@@ -23,7 +23,7 @@ function deriveThresholdParams(sensitivity: number): { blockSize: number; C: num
 /**
  * Primary detection: adaptiveThreshold → morphology → connectedComponents.
  */
-function primaryDetection(cv: any, src: any, sensitivity: number, imageDims: ImageDims): BBox[] {
+function primaryDetection(cv: any, src: any, sensitivity: number, imageDims: ImageDims, blur: number, mergeGap: number): BBox[] {
   const gray = new cv.Mat()
   const blurred = new cv.Mat()
   const thresh = new cv.Mat()
@@ -32,9 +32,12 @@ function primaryDetection(cv: any, src: any, sensitivity: number, imageDims: Ima
   const stats = new cv.Mat()
   const centroids = new cv.Mat()
 
+  // Ensure blur kernel is odd and >= 1
+  const blurSize = Math.max(1, blur % 2 === 0 ? blur + 1 : blur)
+
   try {
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY)
-    cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0)
+    cv.GaussianBlur(gray, blurred, new cv.Size(blurSize, blurSize), 0)
 
     const { blockSize, C } = deriveThresholdParams(sensitivity)
     cv.adaptiveThreshold(
@@ -44,7 +47,10 @@ function primaryDetection(cv: any, src: any, sensitivity: number, imageDims: Ima
       blockSize, C
     )
 
-    const closeSize = computeCloseKernelSize(imageDims.width, imageDims.height)
+    // mergeGap 0 = auto-compute from resolution; > 0 = user override (must be odd)
+    const closeSize = mergeGap > 0
+      ? (mergeGap % 2 === 0 ? mergeGap + 1 : mergeGap)
+      : computeCloseKernelSize(imageDims.width, imageDims.height)
     const closeKernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(closeSize, closeSize))
     cv.morphologyEx(thresh, morphed, cv.MORPH_CLOSE, closeKernel)
     closeKernel.delete()
@@ -139,7 +145,9 @@ function imageToMat(cv: any, img: HTMLImageElement): any {
 export async function detectIcons(
   imageSrc: string,
   sensitivity: number,
-  minArea: number
+  minArea: number,
+  blur: number = 5,
+  mergeGap: number = 0,
 ): Promise<DetectionResult> {
   const cv = await loadOpenCV()
 
@@ -154,7 +162,7 @@ export async function detectIcons(
   const imageDims: ImageDims = { width: src.cols, height: src.rows }
 
   try {
-    let rawBBoxes = primaryDetection(cv, src, sensitivity, imageDims)
+    let rawBBoxes = primaryDetection(cv, src, sensitivity, imageDims, blur, mergeGap)
     let usedFallback = false
 
     const primaryFiltered = processBBoxes(rawBBoxes, minArea, imageDims)

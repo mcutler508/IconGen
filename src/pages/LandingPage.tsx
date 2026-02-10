@@ -90,7 +90,7 @@ function Hero({ canLaunch }: { canLaunch: boolean }) {
       <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
         The fastest way to pull individual icons from sprite sheets, screenshots,
         and design files. AI-powered detection, transparent backgrounds, one-click
-        export.
+        export. Join the waitlist for free access to the app.
       </p>
       <div className="mt-10 flex items-center justify-center gap-4">
         <LaunchAppButton canLaunch={canLaunch} size="lg" />
@@ -245,7 +245,7 @@ const faqs = [
   },
   {
     q: 'Is IconMaker free to use?',
-    a: 'IconMaker is currently free to use with no limits. Join the waitlist to stay updated on new features and any future changes.',
+    a: 'Yes. Sign up for the waitlist to unlock free access to the app.',
   },
   
 ]
@@ -339,7 +339,7 @@ function WaitlistForm({ hasWaitlist, onWaitlistSubmit }: WaitlistFormProps) {
       <div className="mx-auto max-w-xl px-6 text-center">
         <h2 className="text-3xl font-bold">Join the Waitlist</h2>
         <p className="mt-3 text-muted-foreground">
-          Be the first to know about new features and updates.
+          Sign up to unlock free access and be first to know about new features and updates.
         </p>
 
         {submitted ? (
@@ -439,7 +439,7 @@ function CTA({ canLaunch }: { canLaunch: boolean }) {
     <section className="mx-auto max-w-4xl px-6 py-24 text-center">
       <h2 className="text-3xl font-bold">Ready to extract icons?</h2>
       <p className="mt-3 text-muted-foreground">
-        Upload an image and get individual icons in seconds. Join the waitlist to unlock the app.
+        Upload an image and get individual icons in seconds. Join the waitlist to unlock free access.
       </p>
       {canLaunch ? (
         <LaunchAppButton canLaunch={canLaunch} size="lg" className="mt-8" />

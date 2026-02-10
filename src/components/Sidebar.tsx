@@ -15,6 +15,10 @@ interface SidebarProps {
   onSensitivityChange: (value: number) => void
   minArea: number
   onMinAreaChange: (value: number) => void
+  blur: number
+  onBlurChange: (value: number) => void
+  mergeGap: number
+  onMergeGapChange: (value: number) => void
   onDetect: () => void
   isDetecting: boolean
   hasDetection: boolean
@@ -38,6 +42,10 @@ export function Sidebar({
   onSensitivityChange,
   minArea,
   onMinAreaChange,
+  blur,
+  onBlurChange,
+  mergeGap,
+  onMergeGapChange,
   onDetect,
   isDetecting,
   hasDetection,
@@ -110,6 +118,42 @@ export function Sidebar({
                 step={10}
                 data-testid="min-area-slider"
               />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium">Smoothing</label>
+                <span className="text-sm text-muted-foreground" data-testid="blur-value">
+                  {blur}
+                </span>
+              </div>
+              <Slider
+                value={[blur]}
+                onValueChange={([v]) => onBlurChange(v % 2 === 0 ? v + 1 : v)}
+                min={1}
+                max={21}
+                step={2}
+                data-testid="blur-slider"
+              />
+              <p className="mt-1 text-[10px] text-muted-foreground">Higher = less noise, fewer tiny detections</p>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium">Merge Gap</label>
+                <span className="text-sm text-muted-foreground" data-testid="merge-gap-value">
+                  {mergeGap === 0 ? 'Auto' : mergeGap}
+                </span>
+              </div>
+              <Slider
+                value={[mergeGap]}
+                onValueChange={([v]) => onMergeGapChange(v)}
+                min={0}
+                max={15}
+                step={1}
+                data-testid="merge-gap-slider"
+              />
+              <p className="mt-1 text-[10px] text-muted-foreground">Higher = merges nearby shapes. 0 = automatic</p>
             </div>
           </div>
 

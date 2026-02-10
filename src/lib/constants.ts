@@ -6,6 +6,8 @@ export const ACCEPTED_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp'] as const
 
 export const DEFAULT_SENSITIVITY = 128
 export const DEFAULT_MIN_AREA = 200
+export const DEFAULT_BLUR = 5
+export const DEFAULT_MERGE_GAP = 0 // 0 = auto-compute from resolution
 export const DEFAULT_PADDING = 4
 export const DEFAULT_BG_REMOVAL = true
 export const BG_CONFIDENCE_THRESHOLD = 0.85

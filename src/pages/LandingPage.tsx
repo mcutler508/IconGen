@@ -14,7 +14,10 @@ import {
   Shield,
 } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button.tsx'
-import { cn } from '@/lib/utils.ts'
+import heroBg from '@/assets/CookedBg.png'
+import partyGridLogo from '@/assets/PartyGrid.png'
+import demoVideo from '@/assets/HotIconDemoVid.mp4'
+import { cn } from '@/lib/utils.ts' 
 
 /* ------------------------------------------------------------------ */
 /*  Nav                                                               */
@@ -23,7 +26,8 @@ function Nav() {
   return (
     <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-lg">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <Link to="/" className="text-xl font-bold tracking-tight">
+        <Link to="/" className="flex items-center gap-2 text-xl font-bold tracking-tight">
+          <img src={partyGridLogo} alt="Party Grid" className="h-8 w-auto" />
           IconMaker
         </Link>
         <Link to="/app" className={buttonVariants({ size: 'sm' })}>
@@ -39,7 +43,12 @@ function Nav() {
 /* ------------------------------------------------------------------ */
 function Hero() {
   return (
-    <section className="mx-auto max-w-4xl px-6 pb-24 pt-20 text-center">
+    <section
+      className="relative bg-cover bg-center px-6 pb-24 pt-20 text-center"
+      style={{ backgroundImage: `url(${heroBg})` }}
+    >
+      <div className="absolute inset-0 bg-background/80" />
+      <div className="relative mx-auto max-w-4xl">
       <h1 className="text-5xl font-extrabold leading-tight tracking-tight sm:text-6xl">
         Extract Icons from Any&nbsp;Image
       </h1>
@@ -55,6 +64,36 @@ function Hero() {
         <a href="#waitlist" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
           Join the Waitlist
         </a>
+      </div>
+      </div>
+    </section>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Demo Video                                                        */
+/* ------------------------------------------------------------------ */
+function DemoVideo() {
+  return (
+    <section className="mx-auto max-w-4xl px-6 py-24 text-center">
+      <h2 className="text-3xl font-bold">See It in Action</h2>
+      <div className="mt-10 overflow-hidden rounded-xl border border-border/60 bg-muted shadow-2xl">
+        <div className="flex items-center gap-2 border-b border-border/40 px-4 py-3">
+          <span className="h-3 w-3 rounded-full bg-red-400" />
+          <span className="h-3 w-3 rounded-full bg-yellow-400" />
+          <span className="h-3 w-3 rounded-full bg-green-400" />
+          <span className="flex-1 text-center text-xs font-medium text-muted-foreground">
+            IconMaker
+          </span>
+        </div>
+        <video
+          src={demoVideo}
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="w-full"
+        />
       </div>
     </section>
   )
@@ -173,6 +212,7 @@ const faqs = [
     q: 'Is IconMaker free to use?',
     a: 'IconMaker is currently free to use with no limits. Join the waitlist to stay updated on new features and any future changes.',
   },
+  
 ]
 
 function FAQ() {
@@ -253,7 +293,7 @@ function WaitlistForm() {
             <Link to="/app" className={buttonVariants()}>Launch App</Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-10 space-y-4 text-left">
+          <form onSubmit={handleSubmit} className="mt-10 select-auto space-y-4 text-left">
             <div>
               <label htmlFor="name" className="mb-1 block text-sm font-medium">
                 Name
@@ -376,9 +416,10 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen cursor-default select-none bg-background text-foreground">
       <Nav />
       <Hero />
+      <DemoVideo />
       <SocialProof />
       <HowItWorks />
       <Features />
